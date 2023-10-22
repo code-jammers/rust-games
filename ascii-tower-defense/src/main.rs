@@ -13,6 +13,21 @@ struct AsciiArt {
 }
 
 impl AsciiArt {
+    fn new(ascii_art_string: String) -> Self {
+        let mut ascii_vec = vec![];
+        let mut x = 0;
+        let mut y = 0;
+        for (_, c) in ascii_art_string.chars().enumerate() {
+            if c == '\n' {
+                x = 0;
+                y += 1;
+                continue;
+            }
+            ascii_vec.push(Ascii { char: c, xy: Vec2::xy(x,y) });
+            x += 1;
+        }
+        return Self { ascii_vec };
+    }
     fn draw(&self, pencil: &mut Pencil) {
         for a in &self.ascii_vec {
             pencil.draw_char(a.char, a.xy);
@@ -31,21 +46,8 @@ fn main() {
   | |  | |`
   \\ /  \\ /
 ";
+    let monster = AsciiArt::new(monster_guy.to_string());
 
-    let mut x = 0;
-    let mut y = 0;
-    let mut ascii_vec = vec![];
-    for (_, c) in monster_guy.chars().enumerate() {
-        if c == '\n' {
-            x = 0;
-            y += 1;
-            continue;
-        }
-        ascii_vec.push(Ascii { char: c, xy: Vec2::xy(x,y) });
-        x += 1;
-    }
-    let monster = AsciiArt { ascii_vec };
-    
     app.run(|app_state: &mut State, window: &mut Window| {
         for key_event in app_state.keyboard().last_key_events() {
             key_events.push(*key_event);
