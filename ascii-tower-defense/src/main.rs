@@ -4,22 +4,25 @@ use ruscii::keyboard::{Key, KeyEvent};
 use ruscii::spatial::Vec2;
 use ruscii::terminal::Window;
 
+#[derive(Clone)]
 struct Ascii {
     char: char,
     xy: Vec2
 }
+
+#[derive(Clone)]
 struct AsciiArt {
     ascii_vec: Vec<Ascii>
 }
 
 impl AsciiArt {
-    fn new(ascii_art_string: String) -> Self {
+    fn new(ascii_art_string: String, start_x: i32, start_y: i32) -> Self {
         let mut ascii_vec = vec![];
-        let mut x = 0;
-        let mut y = 0;
+        let mut x = start_x;
+        let mut y = start_y;
         for (_, c) in ascii_art_string.chars().enumerate() {
             if c == '\n' {
-                x = 0;
+                x = start_x;
                 y += 1;
                 continue;
             }
@@ -33,30 +36,84 @@ impl AsciiArt {
             pencil.draw_char(a.char, a.xy);
         }
     }
+    fn move_by(&mut self, x: i32, y: i32) {
+        for (i,_) in self.clone().ascii_vec.iter().enumerate() {
+            let xy = self.ascii_vec[i].xy;
+            self.ascii_vec[i].xy = Vec2::xy(xy.x+x, xy.y+y);
+        }
+    }
 }
 
 fn main() {
-    let mut key_events: Vec<KeyEvent> = Vec::new();
+    //let mut key_events: Vec<KeyEvent> = Vec::new();
     let mut app = App::default();
 
-    let monster_guy = "
-      __
+    let add_tower = 
+"_________
+|       |
+ |     |
+ |  +  |
+ |     |
+|_______|
+";
+
+    let mut add_tower_art = AsciiArt::new(add_tower.to_string(), 30, 4);
+
+    // 24
+    let road =
+"|                |
+|                |
+|                |
+|                |
+|                |
+|                |
+";
+
+    let road1 = AsciiArt::new(road.to_string()+&road.to_string()[..]+&road.to_string()[..]+&road.to_string()[..], 45, 0);
+    /*let road2 = AsciiArt::new(road.to_string(), 45, 6);
+    let road3 = AsciiArt::new(road.to_string(), 45, 13);
+    let road4 = AsciiArt::new(road.to_string(), 45, 9);*/
+
+    let monster_guy = 
+"      __
   ___(**)__
  (**)    |_)
   | |  | |`
   \\ /  \\ /
 ";
-    let monster = AsciiArt::new(monster_guy.to_string());
+    let mut monster = AsciiArt::new(monster_guy.to_string(), 50, 0);
+
+    let frame_interval = 30;
+    let mut frame = 1;
 
     app.run(|app_state: &mut State, window: &mut Window| {
         for key_event in app_state.keyboard().last_key_events() {
-            key_events.push(*key_event);
             if let KeyEvent::Pressed(Key::Q) = key_event {
                 app_state.stop();
             }
         }
+        for key_down in app_state.keyboard().get_keys_down() {
+            //key_events.push(*key_event);
+            match key_down {
+                Key::Left => add_tower_art.move_by(-1, 0),
+                Key::Right => add_tower_art.move_by(1, 0),
+                Key::Up => add_tower_art.move_by(0, -1),
+                Key::Down => add_tower_art.move_by(0, 1),
+                _ => (),
+            }
+        }
         let mut pencil = Pencil::new(window.canvas_mut());
+        road1.draw(&mut pencil);
+        /*road2.draw(&mut pencil);
+        road3.draw(&mut pencil);
+        road4.draw(&mut pencil);*/
+        add_tower_art.draw(&mut pencil);
         monster.draw(&mut pencil);
         //pencil.draw_text("Hello, world", Vec2::xy(0, 0));
+        if frame % frame_interval == 0 {
+            monster.move_by(0, 1);
+        }
+        frame += 1;
+        
     });
 }
