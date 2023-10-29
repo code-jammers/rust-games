@@ -48,6 +48,8 @@ fn main() {
     //let mut key_events: Vec<KeyEvent> = Vec::new();
     let mut app = App::default();
 
+    let bullet_str = "-->";
+
     let add_tower = 
 "_________
 |       |
@@ -86,6 +88,10 @@ fn main() {
     let frame_interval = 30;
     let mut frame = 1;
 
+    let mut towers: Vec<AsciiArt> = vec![];
+    let mut bullets: Vec<AsciiArt> =vec![];
+    //let mut bullet: &mut AsciiArt;
+
     app.run(|app_state: &mut State, window: &mut Window| {
         for key_event in app_state.keyboard().last_key_events() {
             if let KeyEvent::Pressed(Key::Q) = key_event {
@@ -99,6 +105,7 @@ fn main() {
                 Key::Right => add_tower_art.move_by(1, 0),
                 Key::Up => add_tower_art.move_by(0, -1),
                 Key::Down => add_tower_art.move_by(0, 1),
+                Key::Enter => towers.push(AsciiArt { ascii_vec: add_tower_art.ascii_vec.clone() }),
                 _ => (),
             }
         }
@@ -109,6 +116,27 @@ fn main() {
         road4.draw(&mut pencil);*/
         add_tower_art.draw(&mut pencil);
         monster.draw(&mut pencil);
+
+        for t in towers.clone() {
+            t.draw(&mut pencil);
+            let x = t.ascii_vec[0].xy.x+5;
+            let y = t.ascii_vec[0].xy.y +2;
+            let bullet: AsciiArt = AsciiArt::new(bullet_str.to_string(), x+4, y);
+            
+            //let bullet = &mut AsciiArt::new(bullet_str.to_string(), x+4, y);
+            if frame % frame_interval == 0 {
+                bullets.push(bullet);
+            }
+        }
+        
+        for i in 0..bullets.len() {
+            bullets[i].move_by(1, 0);
+            bullets[i].draw(&mut pencil);
+        }
+        //for (_, &mut b) in bullets.iter().enumerate() {
+        //    b.clone().draw(&mut pencil);
+        //    b.move_by(1, 0);
+        //}
         //pencil.draw_text("Hello, world", Vec2::xy(0, 0));
         if frame % frame_interval == 0 {
             monster.move_by(0, 1);
