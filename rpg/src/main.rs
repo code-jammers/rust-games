@@ -6,6 +6,49 @@ use ruscii::keyboard::{Key, KeyEvent};
 use ruscii::spatial::Vec2;
 use ruscii::terminal::{Color, Style, Window};
 
+#[derive(Clone)]
+struct Ascii {
+    char: char,
+    xy: Vec2,
+}
+
+#[derive(Clone)]
+struct AsciiArt {
+    ascii_vec: Vec<Ascii>,
+}
+
+impl AsciiArt {
+    fn new(ascii_art_string: String, start_x: i32, start_y: i32) -> Self {
+        let mut ascii_vec = vec![];
+        let mut x = start_x;
+        let mut y = start_y;
+        for (_, c) in ascii_art_string.chars().enumerate() {
+            if c == '\n' {
+                x = start_x;
+                y += 1;
+                continue;
+            }
+            ascii_vec.push(Ascii {
+                char: c,
+                xy: Vec2::xy(x, y),
+            });
+            x += 1;
+        }
+        return Self { ascii_vec };
+    }
+    fn draw(&self, pencil: &mut Pencil) {
+        for a in &self.ascii_vec {
+            pencil.draw_char(a.char, a.xy);
+        }
+    }
+    fn move_by(&mut self, x: i32, y: i32) {
+        for (i, _) in self.clone().ascii_vec.iter().enumerate() {
+            let xy = self.ascii_vec[i].xy;
+            self.ascii_vec[i].xy = Vec2::xy(xy.x + x, xy.y + y);
+        }
+    }
+}
+
 struct GameState {
     player_pos: Vec2,
     player_move: Vec2,
@@ -19,6 +62,7 @@ struct GameState {
     monster_pos: Vec2,
     story_part: i32,
     player_xp: i32,
+    battle_mode: bool,
 }
 
 impl GameState {
@@ -96,12 +140,11 @@ fn draw_game_text(state: &GameState, pencil: &mut Pencil) {
                 .draw_text("Press b to buy a sword!", Vec2::xy(0, 1));
         }
         2 => {
-            pencil
-            .draw_text(
+            pencil.draw_text(
                 "That's a big sword big boi. Let's go kill some monsters!",
-                Vec2::xy(0, 0)
+                Vec2::xy(0, 0),
             );
-        },
+        }
         _ => println!("Default case"),
     }
 }
@@ -134,6 +177,7 @@ fn main() {
         monster_pos: Vec2::xy(x, y),
         story_part: 0,
         player_xp: 0,
+        battle_mode: false,
     };
 
     app.run(|app_state: &mut State, window: &mut Window| {
@@ -149,17 +193,33 @@ fn main() {
                         state.player_max_hp = state.player_max_hp + 1;
                         state.player_hp = state.player_max_hp;
                     }
-                },
+                }
                 _ => (),
             }
         }
 
         for key_down in app_state.keyboard().get_keys_down() {
             match key_down {
-                Key::H | Key::A => state.player_move = Vec2::x(-2),
-                Key::J | Key::S => state.player_move = Vec2::y(1),
-                Key::K | Key::W => state.player_move = Vec2::y(-1),
-                Key::L | Key::D => state.player_move = Vec2::x(2),
+                Key::H | Key::A => {
+                    if !state.battle_mode {
+                        state.player_move = Vec2::x(-2);
+                    }
+                }
+                Key::J | Key::S => {
+                    if !state.battle_mode {
+                        state.player_move = Vec2::y(1);
+                    }
+                }
+                Key::K | Key::W => {
+                    if !state.battle_mode {
+                        state.player_move = Vec2::y(-1);
+                    }
+                }
+                Key::L | Key::D => {
+                    if !state.battle_mode {
+                        state.player_move = Vec2::x(2);
+                    }
+                }
                 _ => (),
             }
         }
@@ -189,23 +249,73 @@ fn main() {
                 || state.player_pos.x + 1 == state.monster_pos.x)
                 && state.player_pos.y == state.monster_pos.y
             {
-                state.player_gold += 1;
-                state.player_xp += 1;
-                state.player_hp -= 1;
-                if state.player_xp >= 5 {
-                    // Level up. Reset player health
-                    state.player_level += 1;
-                    state.player_max_hp += 1;
-                    state.player_xp = 0;
-                    state.player_hp = state.player_max_hp;
-                }
-                state.monster_pos = Vec2::xy(
-                    rand::thread_rng().gen_range(1..size.x - 1),
-                    rand::thread_rng().gen_range(origin_y + 1..dim_y - 1),
-                );
+                state.battle_mode = true;
+
+                let add_player = "
+                __*       
+                \\/        
+                P3        
+                ||        
+@@@@      _T_  /\\;        
+@||||@ .-.[:|:]^\\/         
+\\||/ /\\|    \\/          
+ E]_|\\/ \\-- ||--/           
+      `'  '=:='           
+        /'''''\\           
+       /'''''''\\          
+      []'/'''\\'[]         
+      | \\     / |         
+      | |     | |
+      [__]    [__]
+                ";
+
+                let add_monster = "
+                /^\\      /^\\
+                |  \\    /  |
+                ||\\ \\../ /||
+                )'        `(
+               ,;`w,    ,w';,
+               ;,  ) __ (  ,;
+                ;  \\(\\/)/  ;;
+               ;|  |vwwv|    ``-...
+                ;  `lwwl'   ;      ```''-.
+               ;| ; `' ; ;              `.
+                ;         ,   ,          , |
+                '  ;      ;   l    .     | |
+                ;    ,  ,    |,-,._|      \\;
+                 ;  ; `' ;   '    \\ `\\     \\;
+                 |  |    |  |     |   |    |;
+                 |  ;    ;  |      \\   \\   (;
+                 | |      | l       | | \\  |
+                 | |      | |       | |  ) |
+                 | |      | ;       | |  | |
+                 ; ,      : ,      ,_.'  | |
+                :__'      | |           ,_.'
+                         `--'
+    ";
+
+                let mut add_wolf_art =
+                    AsciiArt::new(add_monster.to_string(), state.map_dim.x - 50, dim_y - 17);
+                let mut add_player_art = AsciiArt::new(add_player.to_string(), 10, dim_y - 15);
+                // state.player_gold += 1;
+                // state.player_xp += 1;
+                // state.player_hp -= 1;
+                // if state.player_xp >= 5 {
+                //     // Level up. Reset player health
+                //     state.player_level += 1;
+                //     state.player_max_hp += 1;
+                //     state.player_xp = 0;
+                //     state.player_hp = state.player_max_hp;
+                // }
+                // state.monster_pos = Vec2::xy(
+                //     rand::thread_rng().gen_range(1..size.x - 1),
+                //     rand::thread_rng().gen_range(origin_y + 1..dim_y - 1),
+                // );
+                add_wolf_art.draw(&mut pencil);
+                add_player_art.draw(&mut pencil);
             }
         }
-       
+
         if state.player_gold >= 3 && state.story_part == 0 {
             state.story_part = 1;
         }
@@ -218,11 +328,13 @@ fn main() {
             Vec2::xy(0, origin_y),
             state.map_dim,
         );
-        draw_character(&state, &mut pencil);
-        if state.story_part < 2 {
-            draw_gold(&state, &mut pencil);
-        } else {
-            draw_monster(&state, &mut pencil);
+        if (!state.battle_mode) {
+            draw_character(&state, &mut pencil);
+            if state.story_part < 2 {
+                draw_gold(&state, &mut pencil);
+            } else {
+                draw_monster(&state, &mut pencil);
+            }
         }
     });
 }
