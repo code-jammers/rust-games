@@ -1,0 +1,30 @@
+{ "columns":0,
+ "grid":
+    {
+     "height":1,
+     "orientation":"orthogonal",
+     "width":1
+    },
+ "margin":0,
+ "name":"Reef",
+ "spacing":0,
+ "tilecount":2,
+ "tiledversion":"1.10.2",
+ "tileheight":529,
+ "tiles":[
+        {
+         "id":0,
+         "image":"..\/..\/..\/..\/..\/..\/Downloads\/reef\/Fish, crab, jellyfish, shark\/PNG\/Crab_1\/Crab_attack_1_000.png",
+         "imageheight":270,
+         "imagewidth":340
+        }, 
+        {
+         "id":1,
+         "image":"..\/..\/..\/..\/..\/..\/Downloads\/reef\/Fish, crab, jellyfish, shark\/PNG\/Shark_1\/Shark_attack_1_000.png",
+         "imageheight":529,
+         "imagewidth":1075
+        }],
+ "tilewidth":1075,
+ "type":"tileset",
+ "version":"1.10"
+}
