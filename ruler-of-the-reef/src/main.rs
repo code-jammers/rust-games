@@ -4,6 +4,19 @@ use macroquad_tiled as tiled;
 
 #[macroquad::main("BasicShapes")]
 async fn main() {
+    let shark_textures = vec![
+        load_texture("./src/assets/Shark_move_1_000.png").await.unwrap(),
+        load_texture("./src/assets/Shark_move_1_001.png").await.unwrap(),
+        load_texture("./src/assets/Shark_move_1_002.png").await.unwrap(),
+        load_texture("./src/assets/Shark_move_1_003.png").await.unwrap(),
+        load_texture("./src/assets/Shark_move_1_004.png").await.unwrap(),
+        load_texture("./src/assets/Shark_move_1_005.png").await.unwrap(),
+        load_texture("./src/assets/Shark_move_1_006.png").await.unwrap(),
+        load_texture("./src/assets/Shark_move_1_007.png").await.unwrap(),
+        load_texture("./src/assets/Shark_move_1_008.png").await.unwrap(),
+        load_texture("./src/assets/Shark_move_1_009.png").await.unwrap(),
+    ];
+
     let texture = load_texture("./src/1_game_background.png").await.unwrap();
     //let sprite_sheet = load_texture("./src/spritesheet.png").await.unwrap();
     let tiled_map_json = load_string("./src/omg2.json").await.unwrap();
@@ -25,6 +38,8 @@ async fn main() {
     let mut y = 0.0;
     let mut dir = 1.;
 
+    let mut i = 0;
+
     loop {
         let w = screen_width();
         let h = screen_height();
@@ -34,8 +49,14 @@ async fn main() {
         //draw_circle(screen_width() - 30.0, screen_height() - 30.0, 15.0, YELLOW);
 
         //draw_text("IT WORKS!", 20.0, 20.0, 30.0, DARKGRAY);
-        clear_background(RED);
-        draw_texture(&texture, 0., 0., RED);
+        clear_background(WHITE);
+        draw_texture(&texture, 0., 0., WHITE);
+        draw_texture(&shark_textures[i], 0., 0., WHITE);
+        i += 1;
+        i = i % 10;
+        
+        
+        /*
         // tiled_map.draw_tiles("Tile Layer 1", Rect::new(0.0, 0.0, 320.0, 152.0), None);
         tiled_map.draw_tiles("Tile Layer 1", Rect::new(x, y, 320.0, 152.0), None);
         x += dir;
@@ -43,6 +64,7 @@ async fn main() {
             dir *= -1.;
             x += dir*3.;
         }
+        */
         next_frame().await
     }
 }
