@@ -85,9 +85,10 @@ async fn main() {
             shark_x -= 5.;
             shark_flip_x = false;
         }
-
+        
         let shark_texture_params = DrawTextureParams {
             flip_x: shark_flip_x,
+            dest_size: Some(vec2(1075./3.,529./3.)),
             ..Default::default()
         };
 
